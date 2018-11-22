@@ -13,13 +13,12 @@ import torch
 import torchvision
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
+import numpy as np
 
 
 # TODO: Defining torchvision transforms for preprocessing
 
-transform = transforms.Compose(
-    [transforms.ToTensor(),
-     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+transform = transforms.Compose([transforms.ToTensor(),transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 
 
 # TODO: Using torchvision datasets to load MNIST
@@ -32,8 +31,7 @@ if not os.path.exists(root):
 # NOTE: Use training batch size = 4 in train data loader.
 
 
-train_dataset = datasets.MNIST(
-    root='./data', train=True, transform=transform, download=True)
+train_dataset = datasets.MNIST(root='./data', train=True, transform=transform, download=True)
 
 test_dataset = datasets.MNIST(
     root='./data', train=False, transform=transform, download=True)
@@ -66,7 +64,9 @@ N_epoch = 5  # Or keep it as is
 
 
 dataiter = iter(train_loader)
-images, labels = dataiter.next()
+inputs, labels = dataiter.next()
+
+# print(np.reshape(inputs, (np.product(inputs.shape),)))
 # data = enumerate(train_loader)
 # idx, (inputs, labels) = next(data)
 # print(idx)
@@ -81,6 +81,10 @@ images, labels = dataiter.next()
 for i in range(0, N_epoch):
     dataiter = iter(train_loader)
     inputs, labels = dataiter.next()
+    # inputs = np.reshape(inputs, (np.product(inputs.shape),))
+    inputs = torch.reshape(inputs, (-1,))
+    
+    # inputs = inputs.unsqueeze(0)
     # print(labels)
     net.train(inputs, labels, lr, debug=False)
     net.eval(inputs, labels, debug=False)
@@ -92,5 +96,7 @@ for i in range(0, N_epoch):
 
 dataiter = iter(test_loader)
 inputs, labels = dataiter.next()
+inputs = np.reshape(inputs, (np.product(inputs.shape),))
+inputs = np.reshape(inputs, (np.product(inputs.shape),))
 # predictions takes inputs and throws Output
 net.predict(inputs)

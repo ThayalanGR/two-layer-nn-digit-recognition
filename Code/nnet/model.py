@@ -1,7 +1,7 @@
 
 # NOTE: You can only use Tensor API of PyTorch
-from nnet import activation, loss, optimizer
-import math
+#from nnet import activation, loss
+#import math
 import numpy as np
 import torch
 
@@ -296,9 +296,9 @@ class FullyConnected:
         return dw1, db1, dw2, db2, dw3, db3
 
 
-# if __name__ == "__main__":
-#     import activation
-#     import loss
-#     import optimizer
-# else:
-#     from nnet import activation, loss, optimizer
+if __name__ == "__main__":
+    import activation
+    import loss
+    import optimizer
+else:
+    from nnet import activation, loss, optimizer

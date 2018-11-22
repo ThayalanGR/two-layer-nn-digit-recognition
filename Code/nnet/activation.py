@@ -31,7 +31,8 @@ def softmax(x):
     """Calculates stable softmax (minor difference from normal softmax) values for tensors
 
     """
-    exp_scores = np.exp(x - np.max(x))
+    
+    exp_scores = np.exp(x)
     stable_softmax = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
     return stable_softmax
 

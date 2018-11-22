@@ -1,7 +1,7 @@
 
 # NOTE: You can only use Tensor API of PyTorch
 
-import torch
+#import torch
 
 # Extra TODO: Document with proper docstring
 def mbgd(weights, biases, dw1, db1, dw2, db2, dw3, db3, lr):
