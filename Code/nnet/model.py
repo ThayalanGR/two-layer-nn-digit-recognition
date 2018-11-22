@@ -93,8 +93,9 @@ class FullyConnected:
             score (torch.tensor): max score for each class. Size (batch_size)
             idx (torch.tensor): index of most activating neuron. Size (batch_size)  
         """
-        outputs =  # forward pass
-        score, idx =  # find max score and its index
+
+        outputs = forward(self, inputs) # forward pass
+        score, idx =  np.argmax(outputs['a3'], axis=1), 5# find max score and its index
         return score, idx
 
     def eval(self, inputs, labels, debug=False):
@@ -112,9 +113,9 @@ class FullyConnected:
             accuracy (float): ratio of correctly to uncorrectly classified samples
             outputs (torch.tensor): predictions from neural network. Size (batch_size, N_out)
         """
-        outputs =  # forward pass
-        creloss =  # calculate loss
-        accuracy =  # calculate accuracy
+        outputs = forward(self, inputs) # forward pass
+        creloss = loss.cross_entropy_loss(outputs, labels) # calculate loss
+        accuracy = accuracy(self, outputs, labels) # calculate accuracy
 
         if debug:
             print('loss: ', creloss)
