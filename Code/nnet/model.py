@@ -134,7 +134,12 @@ class FullyConnected:
         Returns:
             accuracy (float): accuracy score 
         """
-        accuracy =
+        x = outputs
+        y = labels
+        m = y.shape[0]
+        pred = predict(model,x)
+        error = np.sum(np.abs(pred-y))
+        accuracy = (m - error)/m * 100
         return accuracy
 
     def forward(self, inputs):
@@ -186,7 +191,7 @@ class FullyConnected:
         Returns:
             result (torch.tensor): w*X + b of Size (K, J)
         """
-        result =
+        result = w.dot(X) + b
         return result
 
     def backward(self, inputs, labels, outputs):
@@ -250,12 +255,12 @@ class FullyConnected:
         dz2 = np.multiply(dz3.dot(W3.T), tanh_derivative(a2))
 
         dw2 = 1/m*np.dot(a1.T, dz2)
-        dw1 = 1/m*np.dot(a0.T,dz1)
+        dw1 = 1/m*np.dot(a0.T, dz1)
 
-        db1 = 1/m*np.sum(dz1,axis=0)
+        db1 = 1/m*np.sum(dz1, axis=0)
         db2 = 1/m*np.sum(dz2, axis=0)
         db3 = 1/m*np.sum(dz3, axis=0)
-        
+
         return dw1, db1, dw2, db2, dw3, db3
 
 
