@@ -62,26 +62,15 @@ lr = 0.001
 net = model.FullyConnected(N_in, N_h1, N_h2, N_out, device=device)
 
 # TODO: Define number of epochs
-N_epoch = 5  # Or keep it as is
+N_epoch = 5  # Or keep it as is 
 
-examples = enumerate(test_loader)
-batch_idx, (example_data, example_targets) = next(examples)
 
-# print(example_data.shape)
-# print(batch_idx,'==', example_data, '==',example_targets)
-# import matplotlib.pyplot as plt
-
-# fig = plt.figure()
-
-# for i in range(4):
-#   plt.subplot(2,3,i+1)
-#   plt.tight_layout()
-#   plt.imshow(example_data[i][0], cmap='gray', interpolation='none')
-#   plt.title("Ground Truth: {}".format(example_targets[i]))
-#   plt.xticks([])
-#   plt.yticks([])
-# # fig.show()
-# plt.show()
+dataiter = iter(train_loader)
+images, labels = dataiter.next()
+# data = enumerate(train_loader)
+# idx, (inputs, labels) = next(data)
+# print(idx)
+# print(inputs, labels)
 
 # TODO: Training and Validation Loop
 # >>> for n epochs
@@ -89,8 +78,19 @@ batch_idx, (example_data, example_targets) = next(examples)
 # >>> net.train(...)
 # at the end of each training epoch
 # >>> net.eval(...)
+for i in range(0, N_epoch):
+    dataiter = iter(train_loader)
+    inputs, labels = dataiter.next()
+    # print(labels)
+    net.train(inputs, labels, lr, debug=False)
+    net.eval(inputs, labels, debug=False)
 
 
 # TODO: End of Training
 # make predictions on randomly selected test examples
 # >>> net.predict(...)
+
+dataiter = iter(test_loader)
+inputs, labels = dataiter.next()
+# predictions takes inputs and throws Output
+net.predict(inputs)

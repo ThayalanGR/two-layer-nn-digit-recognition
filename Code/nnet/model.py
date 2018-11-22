@@ -1,7 +1,8 @@
 
 # NOTE: You can only use Tensor API of PyTorch
-
+from nnet import activation, loss, optimizer
 import math
+import numpy as np
 import torch
 
 
@@ -48,6 +49,8 @@ class FullyConnected:
 
         self.biases = {'b1': b1, 'b2': b2, 'b3': b3}
 
+        z0, z1, z2, z3 = 0, 0, 0, 0
+
         self.cache = {'z0': z0, 'z1': z1, 'z2': z2, 'z3': z3}
 
     # TODO: Change datatypes to proper PyTorch datatypes
@@ -69,17 +72,41 @@ class FullyConnected:
             outputs (torch.tensor): predictions from neural network. Size (batch_size, N_out)
         """
 
-        outputs =  # forward pass
-        creloss =  # calculate loss
-        accuracy =  # calculate accuracy
+        outputs = self.forward(inputs)  # forward pass
 
+        creloss = loss.cross_entropy_loss(outputs, labels)  # calculate loss
+        accuracy = self.accuracy(outputs, labels)  # calculate accuracy
+
+        dw1, db1, dw2, db2, dw3, db3 = self.backward(inputs, labels, outputs)
+
+        grads = {'dw1': dw1, 'db1': db1, 'dw2': dw2,
+                 'db2': db2, 'dw3': dw3, 'db3': db3}
         if debug:
             print('loss: ', creloss)
             print('accuracy: ', accuracy)
 
-        dw1, db1, dw2, db2, dw3, db3 =
-        self.weights, self.biases =
+        # dw1, db1, dw2, db2, dw3, db3 =
+        # self.weights, self.biases =
+        # invoke update parameter function
+        self.update_parameters(lr, grads)
+
         return creloss, accuracy, outputs
+
+    def update_parameters(self, learning_rate, grads):
+        # weight and bias loading
+        W1, b1, W2, b2, W3, b3 = self.weights['w1'], self.biases['b1'], self.weights[
+            'w2'], self.biases['b2'], self.weights['w3'], self.biases['b3']
+        # Update parameters
+        W1 -= learning_rate * grads['dw1']
+        b1 -= learning_rate * grads['db1']
+        W2 -= learning_rate * grads['dw2']
+        b2 -= learning_rate * grads['db2']
+        W3 -= learning_rate * grads['dw3']
+        b3 -= learning_rate * grads['db3']
+
+        # updating the weight and bias values
+        self.weights['w1'], self.biases['b1'], self.weights['w2'], self.biases[
+            'b2'], self.weights['w3'], self.biases['b3'] = W1, b1, W2, b2, W3, b3
 
     def predict(self, inputs):
         """Predicts output probability and index of most activating neuron
@@ -87,15 +114,16 @@ class FullyConnected:
         This function is used to predict output given inputs. You can then use index in classes to show which class got activated. For example, if in case of MNIST fifth neuron has highest firing probability, then class[5] is the label of input.
 
         Args:
-            inputs (torch.tensor): inputs to train neural network. Size (batch_size, N_in) 
+            inputs (torch.tensor): inputs to train neural network. Size (batch_size, N_in)
 
         Returns:
             score (torch.tensor): max score for each class. Size (batch_size)
-            idx (torch.tensor): index of most activating neuron. Size (batch_size)  
+            idx (torch.tensor): index of most activating neuron. Size (batch_size)
         """
 
-        outputs = forward(self, inputs) # forward pass
-        score, idx =  np.argmax(outputs['a3'], axis=1), 5# find max score and its index
+        outputs = self.forward(inputs)  # forward pass
+        # find max score and its index
+        score, idx = np.argmax(outputs['a3'], axis=1), 5
         return score, idx
 
     def eval(self, inputs, labels, debug=False):
@@ -113,9 +141,9 @@ class FullyConnected:
             accuracy (float): ratio of correctly to uncorrectly classified samples
             outputs (torch.tensor): predictions from neural network. Size (batch_size, N_out)
         """
-        outputs = forward(self, inputs) # forward pass
-        creloss = loss.cross_entropy_loss(outputs, labels) # calculate loss
-        accuracy = accuracy(self, outputs, labels) # calculate accuracy
+        outputs = self.forward(inputs)  # forward pass
+        creloss = loss.cross_entropy_loss(outputs, labels)  # calculate loss
+        accuracy = self.accuracy(outputs, labels)  # calculate accuracy
 
         if debug:
             print('loss: ', creloss)
@@ -138,7 +166,7 @@ class FullyConnected:
         x = outputs
         y = labels
         m = y.shape[0]
-        pred = predict(model,x)
+        pred = self.predict(x)
         error = np.sum(np.abs(pred-y))
         accuracy = (m - error)/m * 100
         return accuracy
@@ -175,10 +203,13 @@ class FullyConnected:
 
         self.cache['z3'] = z3
 
+        a3 = activation.softmax(z3)
+
         # cache = {'a0':a0,'z1':z1,'a1':a1,'z2':z2,'a2':a2,'a3':a3,'z3':z3}
 
         outputs = {'z0': inputs, 'z1': z1, 'a1': a1,
                    'z2': z2, 'a2': a2, 'a3': a3, 'z3': z3}
+
         return outputs
 
     def weighted_sum(self, X, w, b):
@@ -217,14 +248,13 @@ class FullyConnected:
         dout = self.cache['z3']
         d2 = self.cache['z2']
         d1 = self.cache['z1']
-        dw1, db1, dw2, db2, dw3, db3 = calculate_grad(
-            self, inputs, d1, d2, dout)  # calculate all gradients
+        dw1, db1, dw2, db2, dw3, db3 = self.calculate_grad(inputs, d1, d2, dout)  # calculate all gradients
         return dw1, db1, dw2, db2, dw3, db3
 
-    def loss_derivative(y, y_hat):
+    def loss_derivative(self, y, y_hat):
         return (y_hat-y)
 
-    def tanh_derivative(x):
+    def tanh_derivative(self, x):
         return (1 - np.power(x, 2))
 
     def calculate_grad(self, inputs, d1, d2, dout):
@@ -246,17 +276,18 @@ class FullyConnected:
             dw3 (torch.tensor): Gradient of loss w.r.t. w3. Size like w3
             db3 (torch.tensor): Gradient of loss w.r.t. b3. Size like b3
         """
-        W1, b1, W2, b2, W3, b3 = self.weights['w1'], self.biases['b1'], self.weights[
-            'w2'], self.biases['b2'], self.weights['w3'], self.biases['b3']
+        W2, W3 = self.weights['w2'], self.weights['w3']
 
         a0, a1, a2, a3 = self.cache['z0'], self.cache['z1'], self.cache['z2'], self.cache['z3']
         m = inputs.shape[0]
-        dz3 = loss_derivative(y=inputs, y_hat=a3)
-        dw3 = 1/m*(a2.T).dot(dz3)
-        dz2 = np.multiply(dz3.dot(W3.T), tanh_derivative(a2))
 
-        dw2 = 1/m*np.dot(a1.T, dz2)
-        dw1 = 1/m*np.dot(a0.T, dz1)
+        dz3 = self.loss_derivative(y=inputs, y_hat=a3)
+        dz2 = np.multiply(dz3.dot(W3.T), self.tanh_derivative(a2))
+        dz1 = np.multiply(dz2.dot(W2.T), self.tanh_derivative(a1))
+
+        dw1 = 1/m*np.dot(a0, dz1)
+        dw2 = 1/m*np.dot(a1, dz2)
+        dw3 = 1/m*np.dot(a2, dz3)
 
         db1 = 1/m*np.sum(dz1, axis=0)
         db2 = 1/m*np.sum(dz2, axis=0)
@@ -265,9 +296,9 @@ class FullyConnected:
         return dw1, db1, dw2, db2, dw3, db3
 
 
-if __name__ == "__main__":
-    import activation
-    import loss
-    import optimizer
-else:
-    from nnet import activation, loss, optimizer
+# if __name__ == "__main__":
+#     import activation
+#     import loss
+#     import optimizer
+# else:
+#     from nnet import activation, loss, optimizer
