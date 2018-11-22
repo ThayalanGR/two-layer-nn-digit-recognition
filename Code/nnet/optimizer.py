@@ -7,12 +7,15 @@ import torch
 def mbgd(weights, biases, dw1, db1, dw2, db2, dw3, db3, lr):
     """Mini-batch gradient descent
     """
-    weights['w1'] = 
-    weights['w2'] = 
-    weights['w3'] = 
-    biases['b1'] = 
-    biases['b2'] = 
-    biases['b3'] = 
+    alpha = 0.25
+    bs = 100
+    lamb = 0.000
+    weights['w1'] += -alpha * (1.0/bs * dw1 + lamb * weights['w1'])
+    weights['w2'] += -alpha * (1.0/bs * dw2 + lamb * weights['w2'])
+    weights['w3'] += -alpha * (1.0/bs * dw3 + lamb * weights['w3'])
+    biases['b1'] += -alpha * (1.0/bs * db1)
+    biases['b2'] += -alpha * (1.0/bs * db2)
+    biases['b3'] += -alpha * (1.0/bs * db3)
 
     return weights, biases
 
