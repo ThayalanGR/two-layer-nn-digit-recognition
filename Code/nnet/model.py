@@ -42,14 +42,16 @@ class FullyConnected:
 
         self.weights = {'w1': w1, 'w2': w2, 'w3': w3}
 
-        b1 = 1
-        b2 = 1
-        b3 = 1
+        b1 = np.zeros((1, self.N_h1))
+        b2 = np.zeros((1, self.N_h2))
+        b3 = np.zeros((1, self.N_out))
+
         self.biases = {'b1': b1, 'b2': b2, 'b3': b3}
 
-        self.cache = {'z1': z1, 'z2': z2, 'z3': z3}
+        self.cache = {'z0': z0, 'z1': z1, 'z2': z2, 'z3': z3}
 
     # TODO: Change datatypes to proper PyTorch datatypes
+
     def train(self, inputs, labels, lr=0.001, debug=False):
         """Trains the neural network on given inputs and labels.
 
@@ -66,8 +68,6 @@ class FullyConnected:
             accuracy (float): ratio of correctly classified to total samples
             outputs (torch.tensor): predictions from neural network. Size (batch_size, N_out)
         """
-
-      
 
         outputs =  # forward pass
         creloss =  # calculate loss
@@ -148,12 +148,31 @@ class FullyConnected:
         Returns:
             outputs (torch.tensor): predictions from neural network. Size (batch_size, N_out)
         """
-        self.cache['z1'] =
-        a1 =
-        self.cache['z2'] =
-        a2 =
-        self.cache['z3'] =
-        outputs =
+        W1, b1, W2, b2, W3, b3 = self.weights['w1'], self.biases['b1'], self.weights[
+            'w2'], self.biases['b2'], self.weights['w3'], self.biases['b3']
+
+        self.cache['z0'] = inputs
+
+        z1 = inputs.dot(W1) + b1
+
+        self.cache['z1'] = z1
+
+        a1 = np.tanh(z1)
+
+        z2 = a1.dot(W2) + b2
+
+        self.cache['z2'] = z2
+
+        a2 = np.tanh(z2)
+
+        z3 = a2.dot(W3) + b3
+
+        self.cache['z3'] = z3
+
+        # cache = {'a0':a0,'z1':z1,'a1':a1,'z2':z2,'a2':a2,'a3':a3,'z3':z3}
+
+        outputs = {'z0': inputs, 'z1': z1, 'a1': a1,
+                   'z2': z2, 'a2': a2, 'a3': a3, 'z3': z3}
         return outputs
 
     def weighted_sum(self, X, w, b):
@@ -189,11 +208,18 @@ class FullyConnected:
             db3 (torch.tensor): Gradient of loss w.r.t. b3. Size like b3
         """
         # Calculating derivative of loss w.r.t weighted sum
-        dout =
-        d2 =
-        d1 =
-        dw1, db1, dw2, db2, dw3, db3 =  # calculate all gradients
+        dout = self.cache['z3']
+        d2 = self.cache['z2']
+        d1 = self.cache['z1']
+        dw1, db1, dw2, db2, dw3, db3 = calculate_grad(
+            self, inputs, d1, d2, dout)  # calculate all gradients
         return dw1, db1, dw2, db2, dw3, db3
+
+    def loss_derivative(y, y_hat):
+        return (y_hat-y)
+
+    def tanh_derivative(x):
+        return (1 - np.power(x, 2))
 
     def calculate_grad(self, inputs, d1, d2, dout):
         """Calculates gradients for backpropagation
@@ -214,13 +240,22 @@ class FullyConnected:
             dw3 (torch.tensor): Gradient of loss w.r.t. w3. Size like w3
             db3 (torch.tensor): Gradient of loss w.r.t. b3. Size like b3
         """
-        dw3 =
-        dw2 =
-        dw1 =
+        W1, b1, W2, b2, W3, b3 = self.weights['w1'], self.biases['b1'], self.weights[
+            'w2'], self.biases['b2'], self.weights['w3'], self.biases['b3']
 
-        db1 =
-        db2 =
-        db3 =
+        a0, a1, a2, a3 = self.cache['z0'], self.cache['z1'], self.cache['z2'], self.cache['z3']
+        m = inputs.shape[0]
+        dz3 = loss_derivative(y=inputs, y_hat=a3)
+        dw3 = 1/m*(a2.T).dot(dz3)
+        dz2 = np.multiply(dz3.dot(W3.T), tanh_derivative(a2))
+
+        dw2 = 1/m*np.dot(a1.T, dz2)
+        dw1 = 1/m*np.dot(a0.T,dz1)
+
+        db1 = 1/m*np.sum(dz1,axis=0)
+        db2 = 1/m*np.sum(dz2, axis=0)
+        db3 = 1/m*np.sum(dz3, axis=0)
+        
         return dw1, db1, dw2, db2, dw3, db3
 
 
